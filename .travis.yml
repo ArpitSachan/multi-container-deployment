@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - dockerfile
+
+before_install:
+  - docker build -t dedatom/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true dedatom/react-test npm test
+
+after_success:
+  - docker build -t dedatom/multi-client ./client
+  - docker build -t dedatom/multi-nginx ./nginx
+  - docker build -t dedatom/multi-server ./server
+  - docker build -t dedatom/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images to docker hub
+  - docker push dedatom/multi-client
+  - docker push dedatom/multi-nginx
+  - docker push dedatom/multi-server
+  - docker push dedatom/multi-worker
